@@ -1,0 +1,1 @@
+cd AREA-Project/front && npx --no -- commitlint --edit $1

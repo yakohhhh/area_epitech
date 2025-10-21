@@ -1,0 +1,166 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # Job 1: Lint et vérifications rapides
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: |
+            AREA-Project/back/package-lock.json
+            AREA-Project/front/package-lock.json
+            AREA-Project/mobile/package-lock.json
+      
+      - name: Install Backend Dependencies
+        working-directory: AREA-Project/back
+        run: npm ci
+      
+      - name: Lint Backend
+        working-directory: AREA-Project/back
+        run: npm run lint
+      
+      - name: Install Frontend Dependencies
+        working-directory: AREA-Project/front
+        run: npm ci
+      
+      - name: Lint Frontend
+        working-directory: AREA-Project/front
+        run: npm run lint
+      
+      - name: Install Mobile Dependencies
+        working-directory: AREA-Project/mobile
+        run: npm ci
+      
+      - name: Lint Mobile
+        working-directory: AREA-Project/mobile
+        run: npm run lint
+
+  # Job 2: Build Backend
+  build-backend:
+    name: Build Backend
+    runs-on: ubuntu-latest
+    needs: lint
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: AREA-Project/back/package-lock.json
+      
+      - name: Install Dependencies
+        working-directory: AREA-Project/back
+        run: npm ci
+      
+      - name: Build
+        working-directory: AREA-Project/back
+        run: npm run build
+      
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-build
+          path: AREA-Project/back/dist
+          retention-days: 7
+
+  # Job 3: Build Frontend
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    needs: lint
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: AREA-Project/front/package-lock.json
+      
+      - name: Install Dependencies
+        working-directory: AREA-Project/front
+        run: npm ci
+      
+      - name: Build
+        working-directory: AREA-Project/front
+        run: npm run build
+      
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: AREA-Project/front/dist
+          retention-days: 7
+
+  # Job 4: Build Mobile
+  build-mobile:
+    name: Build Mobile
+    runs-on: ubuntu-latest
+    needs: lint
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: AREA-Project/mobile/package-lock.json
+      
+      - name: Install Dependencies
+        working-directory: AREA-Project/mobile
+        run: npm ci
+      
+      - name: Build
+        working-directory: AREA-Project/mobile
+        run: npm run build
+      
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-build
+          path: AREA-Project/mobile/dist
+          retention-days: 7
+
+  # Job 5: Résumé final
+  status:
+    name: CI Status
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-frontend, build-mobile]
+    if: always()
+    
+    steps:
+      - name: Check Build Status
+        run: |
+          echo "✅ Backend: ${{ needs.build-backend.result }}"
+          echo "✅ Frontend: ${{ needs.build-frontend.result }}"
+          echo "✅ Mobile: ${{ needs.build-mobile.result }}"
+          
+          if [ "${{ needs.build-backend.result }}" != "success" ] || \
+             [ "${{ needs.build-frontend.result }}" != "success" ] || \
+             [ "${{ needs.build-mobile.result }}" != "success" ]; then
+            echo "❌ Some builds failed!"
+            exit 1
+          fi
+          
+          echo "🎉 All builds passed!"

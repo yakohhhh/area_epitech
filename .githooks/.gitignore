@@ -1,0 +1,5 @@
+# Git Hooks - Ne pas ignorer
+!pre-commit
+!pre-push
+!commit-msg
+!README.md

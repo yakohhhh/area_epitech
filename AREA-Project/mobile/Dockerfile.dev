@@ -1,0 +1,23 @@
+# Dev Dockerfile for Ionic React mobile app
+FROM node:20-alpine
+
+WORKDIR /app
+
+RUN apk add --no-cache git bash curl
+
+COPY package*.json ./
+COPY tsconfig.json ./
+COPY vite.config.ts ./
+COPY ionic.config.json ./
+COPY capacitor.config.ts ./
+
+RUN npm install
+
+# Install global Ionic + Capacitor CLIs (lightweight)
+RUN npm install -g @ionic/cli @capacitor/cli
+
+COPY . .
+
+EXPOSE 5174
+
+CMD ["npm","run","dev","--","--host","0.0.0.0"]

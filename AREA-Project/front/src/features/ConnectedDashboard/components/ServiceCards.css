@@ -1,0 +1,160 @@
+/* Conteneur global (module scoping => pas écrasé par ton global.css) */
+.root {
+  --card-bg: #f7f8fb;
+  --card-border: #e6e8ef;
+  --ring: #6366f1;
+  --text: #111827;
+  --muted: #6b7280;
+
+  position: relative;
+}
+
+.title {
+  margin: 0 0 8px 0;
+  font-weight: 600;
+  color: var(--text);
+  font-size: 1.1rem;
+}
+
+/* Grille responsive */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Carte */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  position: relative;
+  outline: none;
+
+  /* Animations lisses */
+  transform-origin: center;
+  transition:
+    transform 250ms ease,
+    box-shadow 250ms ease,
+    padding 200ms ease,
+    grid-column 200ms ease;
+  /* Ombre discrète par défaut */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.card:hover {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.card:focus-visible {
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+/* État agrandi */
+.expanded {
+  transform: scale(1.04);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.14);
+  padding: 20px;
+  z-index: 10;
+
+  /* Prend toute la ligne en >= sm */
+  grid-column: 1 / -1;
+}
+
+/* Contenu */
+.cardTitle {
+  margin: 0 0 6px 0;
+  font-weight: 600;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.cardDesc {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+/* Bloc étendu (collapsing max-height + opacity) */
+.expandWrap {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition:
+    max-height 300ms ease,
+    opacity 300ms ease,
+    margin-top 200ms ease;
+}
+
+.expanded .expandWrap {
+  max-height: 420px;
+  opacity: 1;
+  margin-top: 12px;
+}
+
+.expandInner {
+  background: #fff;
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+/* On réutilise tes classes existantes pour ne pas casser le style */
+
+.action-card {
+  transition:
+    transform 250ms ease,
+    box-shadow 250ms ease,
+    padding 200ms ease;
+}
+
+.action-card.expanded {
+  transform: scale(1.05);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+  grid-column: 1 / -1; /* prend toute la ligne */
+  padding: 20px;
+  z-index: 5;
+}
+
+/* bloc étendu */
+.expand-wrap {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition:
+    max-height 300ms ease,
+    opacity 300ms ease;
+}
+
+.action-card.expanded .expand-wrap {
+  max-height: 400px;
+  opacity: 1;
+  margin-top: 10px;
+}
+
+.expand-inner {
+  background: #fff;
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid #eee;
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #666;
+}

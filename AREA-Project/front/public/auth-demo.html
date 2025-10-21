@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AREA - Authentification Moderne</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .demo-nav {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+        }
+        .demo-btn {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        .demo-btn:hover {
+            background: white;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-nav">
+        <button class="demo-btn" onclick="showLogin()">Login</button>
+        <button class="demo-btn" onclick="showRegister()">Register</button>
+    </div>
+    
+    <div id="react-root"></div>
+    
+    <script>
+        function showLogin() {
+            window.location.hash = '#/login';
+        }
+        
+        function showRegister() {
+            window.location.hash = '#/register';
+        }
+    </script>
+</body>
+</html>

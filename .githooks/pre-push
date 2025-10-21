@@ -1,0 +1,105 @@
+#!/bin/bash
+
+# Pre-push hook - Vérifie que tout compile et se lance avant un push
+# Teste les installations de dépendances et les builds
+
+set -e
+
+echo "🚀 Pre-push: Vérifications complètes avant push..."
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+print_status() { echo -e "${GREEN}[✓]${NC} $1"; }
+print_error() { echo -e "${RED}[✗]${NC} $1"; }
+print_warning() { echo -e "${YELLOW}[!]${NC} $1"; }
+
+FAILED=0
+
+check_service() {
+    local SERVICE_NAME=$1
+    local SERVICE_PATH=$2
+    print_status "Vérification de $SERVICE_NAME..."
+    if [ ! -d "$SERVICE_PATH" ]; then
+        print_error "$SERVICE_NAME: Dossier introuvable"
+        return 1
+    fi
+
+    cd "$SERVICE_PATH"
+
+    if [ ! -f "package.json" ]; then
+        print_error "$SERVICE_NAME: package.json introuvable"
+        cd - > /dev/null
+        return 1
+    fi
+
+    print_status "$SERVICE_NAME: Installation des dépendances..."
+    if ! npm ci --prefer-offline --no-audit 2>/dev/null && ! npm install --prefer-offline --no-audit 2>/dev/null; then
+        print_error "$SERVICE_NAME: Échec de l'installation des dépendances"
+        cd - > /dev/null
+        return 1
+    fi
+
+    if [ -f "tsconfig.json" ]; then
+        print_status "$SERVICE_NAME: Vérification TypeScript..."
+        if ! npx tsc --noEmit 2>/dev/null; then
+            print_warning "$SERVICE_NAME: Erreurs TypeScript détectées"
+        fi
+    fi
+
+    if grep -q '"build"' package.json; then
+        print_status "$SERVICE_NAME: Test de build..."
+        if ! npm run build 2>/dev/null; then
+            print_error "$SERVICE_NAME: Le build a échoué"
+            cd - > /dev/null
+            return 1
+        fi
+    fi
+
+    cd - > /dev/null
+    print_status "$SERVICE_NAME: ✅ OK"
+    return 0
+}
+
+echo ""
+echo "═══════════════════════════════════════"
+echo "  VÉRIFICATION DES SERVICES"
+echo "═══════════════════════════════════════"
+echo ""
+
+if ! check_service "Backend" "AREA-Project/back"; then
+    FAILED=1
+fi
+
+echo ""
+
+if ! check_service "Frontend" "AREA-Project/front"; then
+    FAILED=1
+fi
+
+echo ""
+
+if ! check_service "Mobile" "AREA-Project/mobile"; then
+    FAILED=1
+fi
+
+echo ""
+echo "═══════════════════════════════════════"
+
+if [ $FAILED -eq 1 ]; then
+    print_error "Certaines vérifications ont échoué!"
+    echo ""
+    print_warning "Voulez-vous forcer le push malgré les erreurs ? (y/n)"
+    read -r response
+    if [[ ! "$response" =~ ^[Yy]$ ]]; then
+        print_error "Push annulé"
+        exit 1
+    fi
+    print_warning "Push forcé malgré les erreurs..."
+fi
+
+print_status "Pre-push: Toutes les vérifications sont OK!"
+exit 0

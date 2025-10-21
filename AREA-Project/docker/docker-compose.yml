@@ -1,0 +1,23 @@
+services:
+  backend:
+    build: ./back
+    container_name: area_backend
+    ports:
+      - "5001:5001"
+    environment:
+      - NODE_ENV=production
+    # load sensitive variables from back/.env (not committed)
+    env_file:
+      - ./back/.env
+    volumes:
+      - ./back/prisma/database:/app/prisma/database
+  frontend:
+    build: ../front
+    container_name: area_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+    depends_on:
+      - backend

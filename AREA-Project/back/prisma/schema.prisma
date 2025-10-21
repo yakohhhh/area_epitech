@@ -1,0 +1,135 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./database/dev.sqlite"
+}
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  email       String   @unique
+  username    String?  @unique
+  passwordHash String? @map("password_hash")
+  isConfirmed Boolean  @default(false) @map("is_confirmed")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  userServices UserService[]
+  areas        Area[]
+
+  @@map("users")
+}
+
+model Service {
+  id           Int     @id @default(autoincrement())
+  name         String  @unique
+  displayName  String? @map("display_name")
+  description  String?
+  requiresOauth Boolean @default(false) @map("requires_oauth")
+  oauthConfig  String? @map("oauth_config") // JSON stocké comme string
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  userServices UserService[]
+  actions      Action[]
+  reactions    Reaction[]
+
+  @@map("services")
+}
+
+model UserService {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  serviceId  Int      @map("service_id")
+  oauthToken String?  @map("oauth_token")
+  refreshToken String? @map("refresh_token")
+  config     String?  // JSON stocké comme string
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user    User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  
+  actionAreas   Area[] @relation("ActionService")
+  reactionAreas Area[] @relation("ReactionService")
+
+  @@unique([userId, serviceId])
+  @@map("user_services")
+}
+
+model Action {
+  id               Int      @id @default(autoincrement())
+  serviceId        Int      @map("service_id")
+  name             String
+  displayName      String?  @map("display_name")
+  description      String?
+  parametersSchema String?  @map("parameters_schema") // JSON stocké comme string
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  // Relations
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  areas   Area[]
+
+  @@unique([serviceId, name])
+  @@map("actions")
+}
+
+model Reaction {
+  id               Int      @id @default(autoincrement())
+  serviceId        Int      @map("service_id")
+  name             String
+  displayName      String?  @map("display_name")
+  description      String?
+  parametersSchema String?  @map("parameters_schema") // JSON stocké comme string
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  // Relations
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  areas   Area[]
+
+  @@unique([serviceId, name])
+  @@map("reactions")
+}
+
+model Area {
+  id                Int       @id @default(autoincrement())
+  userId            Int       @map("user_id")
+  name              String
+  description       String?
+  actionId          Int       @map("action_id")
+  actionServiceId   Int       @map("action_service_id")
+  actionParams      String?   @map("action_params") // JSON stocké comme string
+  reactionId        Int       @map("reaction_id")
+  reactionServiceId Int       @map("reaction_service_id")
+  reactionParams    String?   @map("reaction_params") // JSON stocké comme string
+  isActive          Boolean   @default(true) @map("is_active")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  lastTriggered     DateTime? @map("last_triggered")
+
+  // Relations
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action          Action      @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  actionService   UserService @relation("ActionService", fields: [actionServiceId], references: [id], onDelete: Cascade)
+  reaction        Reaction    @relation(fields: [reactionId], references: [id], onDelete: Cascade)
+  reactionService UserService @relation("ReactionService", fields: [reactionServiceId], references: [id], onDelete: Cascade)
+  executions      Execution[]
+
+  @@map("areas")
+}
+
+model Execution {
+  id           Int      @id @default(autoincrement())
+  areaId       Int      @map("area_id")
+  triggerData  String?  @map("trigger_data") // JSON stocké comme string
+  status       String   @default("success") // "success" ou "failed"
+  errorMessage String?  @map("error_message")
+  executedAt   DateTime @default(now()) @map("executed_at")
+
+  // Relations
+  area Area @relation(fields: [areaId], references: [id], onDelete: Cascade)
+
+  @@map("executions")
+}

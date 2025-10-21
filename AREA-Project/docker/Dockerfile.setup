@@ -1,0 +1,13 @@
+# Dockerfile pour la configuration automatique du projet
+FROM node:20-alpine
+
+WORKDIR /workspace
+
+# Installation des outils nécessaires
+RUN apk add --no-cache git curl bash
+
+# Installation globale des outils de développement
+RUN npm install -g husky @commitlint/cli lint-staged
+
+# Script par défaut (sera overridé par docker-compose)
+CMD ["echo", "Service de configuration prêt"]

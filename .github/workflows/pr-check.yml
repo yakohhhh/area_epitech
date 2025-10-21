@@ -1,0 +1,42 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  pr-validation:
+    name: Validate Pull Request
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Check PR Title
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          if ! echo "$PR_TITLE" | grep -qE "^(feat|fix|docs|style|refactor|test|chore|build|ci|perf|revert)(\(.+\))?: .+"; then
+            echo "❌ PR title must follow conventional commits format"
+            echo "Example: feat(back): add new feature"
+            exit 1
+          fi
+          echo "✅ PR title is valid"
+      
+      - name: Check Changed Files
+        run: |
+          git diff --name-only origin/main...HEAD
+          echo ""
+          CHANGED_FILES=$(git diff --name-only origin/main...HEAD | wc -l)
+          echo "📝 Changed files: $CHANGED_FILES"
+      
+      - name: Auto Label
+        uses: actions/labeler@v5
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"

@@ -1,0 +1,102 @@
+services:
+  # Backend NestJS avec hot-reload
+  backend:
+    build:
+      context: ../back
+      dockerfile: Dockerfile.dev
+    container_name: area_backend_dev
+    env_file:
+      - ../back/.env
+    ports:
+      - "5001:5001"
+      - "9229:9229"  # Port debug Node.js
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=file:./database/dev.sqlite
+    volumes:
+      - ../back:/app
+      - ../back/docker-entrypoint-dev.sh:/usr/local/bin/docker-entrypoint-dev.sh:ro
+      - /app/node_modules
+      - /app/dist
+    command: ["npm", "run", "start:dev"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/about.json"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend React avec hot-reload et outils de dev
+  frontend:
+    build:
+      context: ../front
+      dockerfile: Dockerfile.dev
+    container_name: area_frontend_dev
+    ports:
+      - "3000:3000"
+      - "3001:3001"  # Port pour les outils de dev
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:5001
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    volumes:
+      - ../front:/app
+      - /app/node_modules
+      - /app/dist
+    depends_on:
+      - backend
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+
+  # Mobile Ionic React dev server (web wrapper for mobile build)
+  mobile:
+    build:
+      context: ../mobile
+      dockerfile: Dockerfile.dev
+    container_name: area_mobile_dev
+    ports:
+      - "5174:5174"
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:5001
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    volumes:
+      - ../mobile:/app
+      - /app/node_modules
+      - /app/dist
+    depends_on:
+      - backend
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5174" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Service pour configurer automatiquement les hooks Git
+  setup:
+    build:
+      context: .
+      dockerfile: Dockerfile.setup
+    container_name: area_setup
+    volumes:
+      - .:/workspace
+      - ../front:/workspace/AREA-Project/front
+      - ../back:/workspace/AREA-Project/back
+    working_dir: /workspace
+    command: >
+      sh -c "
+        echo '🚀 Configuration automatique du projet AREA...' &&
+        # Configuration des hooks Git
+        echo '📦 Configuration des hooks Git...' &&
+        cd AREA-Project/front &&
+        chmod +x .githooks/pre-commit .githooks/commit-msg &&
+
+        # Vérification de la configuration
+        echo '✅ Vérification de la configuration...' &&
+        echo 'Tests skipped in setup - run in frontend container if needed' &&
+        echo '🎉 Configuration terminée ! Le projet est prêt.' &&
+        echo '💡 Utilisez: docker-compose up pour démarrer le développement'
+      "
+    profiles:
+      - setup

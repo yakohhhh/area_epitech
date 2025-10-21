@@ -1,0 +1,23 @@
+# Configuration pour auto-labeling des PRs
+
+backend:
+  - AREA-Project/back/**/*
+
+frontend:
+  - AREA-Project/front/**/*
+
+mobile:
+  - AREA-Project/mobile/**/*
+
+documentation:
+  - '**/*.md'
+  - AREA-Project/docs/**/*
+
+ci/cd:
+  - .github/**/*
+  - .githooks/**/*
+  - '**/*.sh'
+
+dependencies:
+  - '**/package.json'
+  - '**/package-lock.json'

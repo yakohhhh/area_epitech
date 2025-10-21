@@ -1,0 +1,11 @@
+.env
+node_modules
+dist
+
+# Database with secrets
+prisma/database/*.sqlite
+prisma/database/*.sqlite-journal
+
+# Database with secrets
+prisma/database/*.sqlite
+prisma/database/*.sqlite-journal

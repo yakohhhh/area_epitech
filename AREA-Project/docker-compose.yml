@@ -1,0 +1,70 @@
+services:
+  # Backend NestJS
+  backend:
+    build:
+      context: ./back
+      dockerfile: Dockerfile.dev
+    container_name: area_backend
+    ports:
+      - "5001:5001"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=file:./database/dev.sqlite
+      - JWT_SECRET=${JWT_SECRET}
+      - GOOGLE_CLIENT_ID=your_google_client_id_here
+      - GOOGLE_CLIENT_SECRET=your_google_client_secret_here
+      - GOOGLE_CALLBACK_URL=http://localhost:5001/auth/google/callback
+    volumes:
+      - ./back:/app
+      - /app/node_modules
+    command: ["npm", "run", "start:dev"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Frontend React/Vite
+  frontend:
+    build:
+      context: ./front
+      dockerfile: Dockerfile.dev
+    container_name: area_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:5001
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./front:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+    restart: unless-stopped
+
+  # Mobile Ionic/Capacitor
+  mobile:
+    build:
+      context: ./mobile
+      dockerfile: Dockerfile.dev
+    container_name: area_mobile
+    ports:
+      - "8100:8100"
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:5001
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./mobile:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    command: ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+    restart: unless-stopped
+
+networks:
+  default:
+    name: area_network

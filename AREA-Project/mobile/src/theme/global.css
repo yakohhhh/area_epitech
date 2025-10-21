@@ -1,0 +1,7 @@
+html, body, #root { height: 100%; }
+body { margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', Arial, sans-serif; }
+
+.flex { display: flex; }
+.center { display: flex; align-items: center; justify-content: center; }
+.mt-md { margin-top: var(--space-md); }
+.full-width { width: 100%; }
